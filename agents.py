@@ -11,7 +11,7 @@ Agents:
 
 from __future__ import annotations
 from langchain_openai import ChatOpenAI
-from langchain.schema import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 from duckduckgo_search import DDGS
 from config import LLM_MODEL, TEMPERATURE, RELEVANCE_THRESHOLD, tracker
 
