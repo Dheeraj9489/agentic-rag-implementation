@@ -10,14 +10,24 @@ Agents:
 """
 
 from __future__ import annotations
-from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
 from duckduckgo_search import DDGS
-from config import LLM_MODEL, TEMPERATURE, RELEVANCE_THRESHOLD, tracker
+from config import (
+    LLM_PROVIDER, TEMPERATURE, RELEVANCE_THRESHOLD, tracker,
+    OPENAI_LLM_MODEL, OLLAMA_LLM_MODEL, OLLAMA_BASE_URL,
+)
 
 
 def _llm():
-    return ChatOpenAI(model=LLM_MODEL, temperature=TEMPERATURE)
+    if LLM_PROVIDER == "ollama":
+        from langchain_ollama import ChatOllama
+        return ChatOllama(
+            model=OLLAMA_LLM_MODEL,
+            base_url=OLLAMA_BASE_URL,
+            temperature=TEMPERATURE,
+        )
+    from langchain_openai import ChatOpenAI
+    return ChatOpenAI(model=OPENAI_LLM_MODEL, temperature=TEMPERATURE)
 
 
 def _track(response):

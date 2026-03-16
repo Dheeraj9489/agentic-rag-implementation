@@ -1,10 +1,12 @@
 """Builds and manages the vector knowledge base for healthcare documents."""
 
-from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
-from config import EMBEDDING_MODEL, tracker
+from config import (
+    LLM_PROVIDER, OPENAI_EMBEDDING_MODEL,
+    OLLAMA_EMBEDDING_MODEL, OLLAMA_BASE_URL, tracker,
+)
 
 HEALTHCARE_DOCS = [
     Document(
@@ -70,12 +72,20 @@ HEALTHCARE_DOCS = [
 ]
 
 
+def _get_embeddings():
+    if LLM_PROVIDER == "ollama":
+        from langchain_ollama import OllamaEmbeddings
+        return OllamaEmbeddings(model=OLLAMA_EMBEDDING_MODEL, base_url=OLLAMA_BASE_URL)
+    from langchain_openai import OpenAIEmbeddings
+    return OpenAIEmbeddings(model=OPENAI_EMBEDDING_MODEL)
+
+
 def build_knowledge_base() -> FAISS:
     """Chunk documents and create a FAISS vector store."""
     splitter = RecursiveCharacterTextSplitter(chunk_size=400, chunk_overlap=50)
     chunks = splitter.split_documents(HEALTHCARE_DOCS)
 
-    embeddings = OpenAIEmbeddings(model=EMBEDDING_MODEL)
+    embeddings = _get_embeddings()
     vectorstore = FAISS.from_documents(chunks, embeddings)
 
     total_chars = sum(len(c.page_content) for c in chunks)

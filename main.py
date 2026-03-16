@@ -12,7 +12,8 @@ Based on: "Agentic Retrieval-Augmented Generation: A Survey on Agentic RAG"
           (Singh et al., 2025) — arXiv:2501.09136
 
 Usage:
-  python main.py                          # run with API key from .env
+  python main.py                          # run with OpenAI (API key from .env)
+  python main.py --ollama                 # run with local Ollama model
   python main.py --demo                   # run in demo/simulation mode
   python main.py "your custom query"      # run a custom query
 """
@@ -24,12 +25,16 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+FLAGS = {"--demo", "--ollama"}
+
 
 def run_live():
-    """Run full pipeline with OpenAI API."""
-    from config import tracker
+    """Run full pipeline with the configured LLM provider."""
+    import config
     from knowledge_base import build_knowledge_base
     from pipeline import run_pipeline
+
+    provider = config.LLM_PROVIDER
 
     DEMO_QUERIES = [
         "What are the common symptoms of Type 2 Diabetes and how is it related to heart disease?",
@@ -37,16 +42,18 @@ def run_live():
         "How does chronic kidney disease relate to diabetes and what treatments are available?",
     ]
 
+    provider_label = "Ollama (local)" if provider == "ollama" else "OpenAI"
     print(f"\n{Fore.MAGENTA}{'='*60}")
-    print("  AGENTIC RAG — Healthcare Knowledge Assistant")
+    print("  AGENTIC RAG -- Healthcare Knowledge Assistant")
     print("  Corrective RAG with Multi-Agent Architecture")
+    print(f"  Provider: {provider_label}")
     print(f"{'='*60}{Style.RESET_ALL}\n")
 
     print(f"{Fore.CYAN}Building knowledge base...{Style.RESET_ALL}")
     vectorstore = build_knowledge_base()
     print()
 
-    args = [a for a in sys.argv[1:] if a != "--demo"]
+    args = [a for a in sys.argv[1:] if a not in FLAGS]
     queries = args if args else DEMO_QUERIES
 
     for i, query in enumerate(queries):
@@ -55,11 +62,11 @@ def run_live():
         print(f"{'='*60}{Style.RESET_ALL}")
         run_pipeline(vectorstore, query)
 
-    print(tracker.summary())
+    print(config.tracker.summary(provider=provider))
 
 
 def run_demo():
-    """Run simulated pipeline without API key."""
+    """Run simulated pipeline without any API or model."""
     from demo_mode import main as demo_main
     demo_main()
 
@@ -68,12 +75,17 @@ def main():
     colorama_init()
 
     use_demo = "--demo" in sys.argv
+    use_ollama = "--ollama" in sys.argv
     has_key = bool(os.getenv("OPENAI_API_KEY"))
 
-    if use_demo or not has_key:
+    if use_ollama:
+        import config
+        config.LLM_PROVIDER = "ollama"
+        run_live()
+    elif use_demo or not has_key:
         if not has_key and not use_demo:
             print(f"\n{Fore.YELLOW}  No OPENAI_API_KEY found. Running in demo mode.")
-            print(f"  Set OPENAI_API_KEY in .env for live mode.{Style.RESET_ALL}")
+            print(f"  Set OPENAI_API_KEY in .env or use --ollama for local models.{Style.RESET_ALL}")
         run_demo()
     else:
         run_live()

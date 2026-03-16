@@ -7,9 +7,20 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Provider: "openai" or "ollama" (set via LLM_PROVIDER env var or --ollama flag)
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")
+
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-LLM_MODEL = "gpt-4o-mini"
-EMBEDDING_MODEL = "text-embedding-3-small"
+
+# OpenAI defaults
+OPENAI_LLM_MODEL = "gpt-4o-mini"
+OPENAI_EMBEDDING_MODEL = "text-embedding-3-small"
+
+# Ollama defaults (override via env vars)
+OLLAMA_LLM_MODEL = os.getenv("OLLAMA_LLM_MODEL", "llama3")
+OLLAMA_EMBEDDING_MODEL = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text")
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+
 TEMPERATURE = 0.2
 RELEVANCE_THRESHOLD = 0.6
 
@@ -51,10 +62,15 @@ class CostTracker:
     def elapsed_seconds(self) -> float:
         return time.time() - self.start_time
 
-    def summary(self) -> str:
+    def summary(self, provider: str = "openai") -> str:
+        cost_line = (
+            f"  Estimated cost:       ${self.estimated_cost:.6f}\n"
+            if provider == "openai"
+            else "  Estimated cost:       $0.00 (local model)\n"
+        )
         return (
             f"\n{'='*60}\n"
-            f"  COST & USAGE REPORT\n"
+            f"  COST & USAGE REPORT  (provider: {provider})\n"
             f"{'='*60}\n"
             f"  LLM calls:            {self.llm_calls}\n"
             f"  Retrieval calls:      {self.retrieval_calls}\n"
@@ -63,7 +79,7 @@ class CostTracker:
             f"  Prompt tokens:        {self.prompt_tokens:,}\n"
             f"  Completion tokens:    {self.completion_tokens:,}\n"
             f"  Embedding tokens:     {self.embedding_tokens:,}\n"
-            f"  Estimated cost:       ${self.estimated_cost:.6f}\n"
+            f"{cost_line}"
             f"  Wall-clock time:      {self.elapsed_seconds:.2f}s\n"
             f"{'='*60}"
         )

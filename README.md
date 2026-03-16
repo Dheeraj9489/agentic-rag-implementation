@@ -4,6 +4,8 @@ A **Corrective Agentic RAG** system implementing the multi-agent architecture de
 [*"Agentic Retrieval-Augmented Generation: A Survey on Agentic RAG"*](https://arxiv.org/abs/2501.09136)
 (Singh et al., 2025).
 
+Supports **OpenAI** and **Ollama (local)** as LLM providers.
+
 Forked from: [asinghcsu/AgenticRAG-Survey](https://github.com/asinghcsu/AgenticRAG-Survey)
 
 ---
@@ -42,12 +44,23 @@ User Query
 
 ---
 
+## LLM Provider Support
+
+| Provider | LLM | Embeddings | Cost |
+|----------|-----|------------|------|
+| **OpenAI** | gpt-4o-mini | text-embedding-3-small | Pay-per-token |
+| **Ollama** | llama3 (configurable) | nomic-embed-text (configurable) | Free (local) |
+
+The provider is selected via the `--ollama` CLI flag, the `LLM_PROVIDER` env var, or auto-detected from the presence of `OPENAI_API_KEY`.
+
+---
+
 ## Quick Start
 
 ### 1. Clone and set up virtual environment
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/Dheeraj9489/agentic-rag-implementation.git
 cd agentic-rag-implementation
 python -m venv .venv
 
@@ -64,13 +77,13 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 3. Run in demo mode (no API key needed)
+### 3. Run in demo mode (no API key or model needed)
 
 ```bash
 python main.py --demo
 ```
 
-### 4. Run with OpenAI API (full live mode)
+### 4. Run with OpenAI
 
 ```bash
 # Create .env with your key
@@ -79,10 +92,32 @@ echo OPENAI_API_KEY=sk-your-key-here > .env
 python main.py
 ```
 
-### 5. Custom queries
+### 5. Run with Ollama (local, free)
 
 ```bash
+# Install Ollama: https://ollama.com/download
+# Pull a model and an embedding model:
+ollama pull llama3
+ollama pull nomic-embed-text
+
+# Run the system:
+python main.py --ollama
+```
+
+You can customize the Ollama model via environment variables or `.env`:
+
+```bash
+OLLAMA_LLM_MODEL=mistral              # default: llama3
+OLLAMA_EMBEDDING_MODEL=mxbai-embed-large  # default: nomic-embed-text
+OLLAMA_BASE_URL=http://localhost:11434 # default
+```
+
+### 6. Custom queries
+
+```bash
+# Works with any provider
 python main.py "What treatments exist for hypertension in diabetic patients?"
+python main.py --ollama "What are the risk factors for chronic kidney disease?"
 ```
 
 ---
@@ -91,15 +126,15 @@ python main.py "What treatments exist for hypertension in diabetic patients?"
 
 ```
 agentic-rag-implementation/
-  main.py            # Entry point (auto-detects API key or uses demo mode)
-  config.py          # Configuration, cost tracking
+  main.py            # Entry point (--demo, --ollama, or auto-detect OpenAI)
+  config.py          # Provider config, model settings, cost tracking
   knowledge_base.py  # FAISS vector store with healthcare documents
-  agents.py          # Five specialized agents
+  agents.py          # Five specialized agents (provider-agnostic)
   pipeline.py        # Corrective RAG orchestration pipeline
-  demo_mode.py       # Simulation mode (no API key required)
+  demo_mode.py       # Simulation mode (no API key or model required)
   requirements.txt   # Python dependencies
   REPORT.md          # 1-page analysis report
-  .env.example       # Template for API key
+  .env.example       # Template for provider configuration
   .gitignore         # Excludes .venv, .env, __pycache__
   screenshots/       # Run output captures
 ```
@@ -154,7 +189,7 @@ QUERY: What screening tests should adults over 40 get for preventive care?
 
 ```
 ============================================================
-  COST & USAGE REPORT
+  COST & USAGE REPORT  (provider: openai)
 ============================================================
   LLM calls:            16
   Retrieval calls:      5
@@ -166,6 +201,8 @@ QUERY: What screening tests should adults over 40 get for preventive care?
   Wall-clock time:      3.31s
 ============================================================
 ```
+
+When using Ollama, the cost report shows `$0.00 (local model)` since inference is free.
 
 ---
 
