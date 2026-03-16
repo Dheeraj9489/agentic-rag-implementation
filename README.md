@@ -141,7 +141,7 @@ agentic-rag-implementation/
 
 ---
 
-## Sample Run Output
+## Sample Run Output (run with ollama)
 
 ### Demo 1: Diabetes and Heart Disease (Direct retrieval -- no correction needed)
 
@@ -197,7 +197,7 @@ QUERY: What screening tests should adults over 40 get for preventive care?
   Corrections applied:  1
   Prompt tokens:        7,400
   Completion tokens:    1,010
-  Estimated cost:       $0.001726
+  Estimated cost:       $0.00 (local model)
   Wall-clock time:      3.31s
 ============================================================
 ```
